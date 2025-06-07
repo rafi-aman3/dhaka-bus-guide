@@ -1,0 +1,58 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql" // or mysql/sqlite based on your project
+    url      = env("DATABASE_URL")
+}
+
+model Route {
+    id             Int             @id @default(autoincrement())
+    name           String
+    startPoint     String
+    endPoint       String
+    routeStoppages RouteStoppage[]
+    buses          Bus[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Stoppage {
+    id             Int             @id @default(autoincrement())
+    nameBn         String
+    nameEn         String
+    lat            Float? // Optional
+    lon            Float? // Optional
+    routeStoppages RouteStoppage[]
+
+    @@unique([nameEn])
+}
+
+model RouteStoppage {
+    id         Int   @id @default(autoincrement())
+    routeId    Int
+    stoppageId Int
+    position   Int // Order of the stoppage
+    fare       Float // Fare from start
+
+    route    Route    @relation(fields: [routeId], references: [id])
+    stoppage Stoppage @relation(fields: [stoppageId], references: [id])
+
+    @@unique([routeId, stoppageId])
+    @@index([routeId, position])
+}
+
+model Bus {
+    id      Int     @id @default(autoincrement())
+    nameEn  String
+    nameBn  String
+    imgUrl  String?
+    routeId Int
+
+    route Route @relation(fields: [routeId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
