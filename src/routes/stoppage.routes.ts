@@ -5,6 +5,7 @@ import {
   updateStoppageSchema,
 } from "../validations/stoppage.validation";
 import { validateRequest } from "../middlewares/validateRequest";
+import { upload } from "../middlewares/upload.middleware";
 
 const router = Router();
 
@@ -24,5 +25,11 @@ router.put(
 );
 
 router.delete("/:id", StoppageController.delete);
+
+router.post(
+  "/stoppages/upload-excel",
+  upload.single("file"),
+  StoppageController.uploadFromExcel
+);
 
 export default router;

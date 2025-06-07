@@ -3,6 +3,7 @@ import { StoppageService } from "../services/stoppage.service";
 import { catchAsync } from "../utils/catchAsync";
 import { ApiError } from "../utils/apiError";
 import logger from "../utils/logger";
+import * as XLSX from "xlsx";
 
 export const StoppageController = {
   getAll: catchAsync(async (_req: Request, res: Response) => {
@@ -92,6 +93,34 @@ export const StoppageController = {
     res.status(200).json({
       success: true,
       message: "Stoppage deleted successfully",
+    });
+  }),
+
+  uploadFromExcel: catchAsync(async (req: Request, res: Response) => {
+    if (!req.file) {
+      throw new ApiError(400, "Excel file is required");
+    }
+
+    logger.info("Parsing uploaded Excel file...");
+
+    const buffer = req.file.buffer;
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    // Run insertion in background
+    StoppageService.bulkCreateFromExcel(data)
+      .then((count) => {
+        logger.info(`Background insert of ${count} stoppages completed`);
+      })
+      .catch((err) => {
+        logger.error({ err }, "Background insert failed");
+      });
+
+    res.status(202).json({
+      success: true,
+      message:
+        "Stoppage creation task started. Please check logs for completion.",
     });
   }),
 };

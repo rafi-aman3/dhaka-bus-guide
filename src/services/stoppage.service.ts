@@ -66,4 +66,22 @@ export const StoppageService = {
       return null;
     }
   },
+
+  bulkCreateFromExcel: async (excelData: any[]) => {
+    const parsed = excelData.map((item) => ({
+      nameEn: item.name_en || item.nameEn,
+      nameBn: item.name_bn || item.nameBn,
+      lat: item.lat ? Number(item.lat) : null,
+      lon: item.lon ? Number(item.lon) : null,
+    }));
+
+    const stoppages = parsed.filter((s) => s.nameEn && s.nameBn);
+
+    const created = await prisma.stoppage.createMany({
+      data: stoppages,
+      skipDuplicates: true,
+    });
+
+    return created.count;
+  },
 };
