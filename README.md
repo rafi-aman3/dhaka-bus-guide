@@ -18,16 +18,6 @@ A RESTful API service for managing bus stoppages in Dhaka city.
 - Prisma (ORM)
 - PostgreSQL
 
-## Project Structure
-
-src/
-├── controllers/ # Request handlers
-├── middlewares/ # Custom middleware functions
-├── routes/ # API route definitions
-├── services/ # Business logic
-├── utils/ # Utility functions
-├── validations/ # Request validation schemas
-└── index.ts # Application entry point
 
 ## Getting Started
 
@@ -40,40 +30,36 @@ src/
 ### Installation
 
 1. Clone the repository
+
 2. Install dependencies:
-   ```bash
-   npm install
 
 ```
+npm install
+```
+
+
 3. Set up environment variables in .env file:
 ```
-
-DATABASE_URL="postgresql://
-user:password@localhost:5432/dhaka_bus"
-
+DATABASE_URL="postgresql://user:password@localhost:5432/dhaka_bus"
 ```
+
 4. Run database migrations:
 ```
-
 npx prisma migrate dev
-
 ```
+
 ### Development
 Start the development server:
 
 ```
-
 npm run dev
-
 ```
 ### Production
 Build and start the production server:
 
 ```
-
 npm run build
 npm start
-
 ```
 ## API Endpoints
 ### Stoppages
@@ -97,6 +83,3 @@ The application uses a custom logger for tracking API operations and errors.
 3. Commit your changes
 4. Push to the branch
 5. Create a new Pull Request
-## License
-ISC
-```
