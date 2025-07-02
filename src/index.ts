@@ -7,6 +7,8 @@ import router from "./routes";
 import { ApiError } from "./utils/apiError";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 import logger from "./utils/logger";
+import "./workers/stoppage.worker";
+
 dotenv.config();
 
 const app = express();

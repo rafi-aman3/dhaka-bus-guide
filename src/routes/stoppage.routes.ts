@@ -27,7 +27,7 @@ router.put(
 router.delete("/:id", StoppageController.delete);
 
 router.post(
-  "/stoppages/upload-excel",
+  "/upload-excel",
   upload.single("file"),
   StoppageController.uploadFromExcel
 );

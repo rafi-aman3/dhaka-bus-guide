@@ -4,6 +4,7 @@ import { catchAsync } from "../utils/catchAsync";
 import { ApiError } from "../utils/apiError";
 import logger from "../utils/logger";
 import * as XLSX from "xlsx";
+import { stoppageQueue } from "../jobs/stoppage.queue";
 
 export const StoppageController = {
   getAll: catchAsync(async (_req: Request, res: Response) => {
@@ -97,30 +98,46 @@ export const StoppageController = {
   }),
 
   uploadFromExcel: catchAsync(async (req: Request, res: Response) => {
+    logger.info("Upload request received");
+    logger.info(req.file, "req.file:");
+    logger.info(req.files, "req.files:");
+    logger.info(req.body, "req.body:");
+
     if (!req.file) {
       throw new ApiError(400, "Excel file is required");
     }
 
+    logger.info(
+      {
+        fieldname: req.file.fieldname,
+        originalname: req.file.originalname,
+        encoding: req.file.encoding,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        bufferExists: !!req.file.buffer,
+        bufferSize: req.file.buffer?.length,
+      },
+      "File details:"
+    );
+
     logger.info("Parsing uploaded Excel file...");
 
     const buffer = req.file.buffer;
-    const workbook = XLSX.read(buffer, { type: "buffer" });
-    const sheetName = workbook.SheetNames[0];
-    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    const fileName = req.file.originalname;
 
-    // Run insertion in background
-    StoppageService.bulkCreateFromExcel(data)
-      .then((count) => {
-        logger.info(`Background insert of ${count} stoppages completed`);
-      })
-      .catch((err) => {
-        logger.error({ err }, "Background insert failed");
-      });
+    logger.info(`Parsed Excel file: ${fileName}`);
+
+    const job = await stoppageQueue.add("process-stoppages", {
+      buffer: buffer.toString("base64"),
+      fileName,
+    });
+
+    logger.info(`Added job ${job.id} to queue`);
 
     res.status(202).json({
       success: true,
-      message:
-        "Stoppage creation task started. Please check logs for completion.",
+      message: "Upload accepted. Processing in background.",
+      jobId: job.id,
     });
   }),
 };

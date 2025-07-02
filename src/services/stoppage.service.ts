@@ -68,20 +68,53 @@ export const StoppageService = {
   },
 
   bulkCreateFromExcel: async (excelData: any[]) => {
-    const parsed = excelData.map((item) => ({
-      nameEn: item.name_en || item.nameEn,
-      nameBn: item.name_bn || item.nameBn,
-      lat: item.lat ? Number(item.lat) : null,
-      lon: item.lon ? Number(item.lon) : null,
-    }));
+    logger.info(`bulkCreateFromExcel called with ${excelData.length} items`);
+    logger.info("Sample raw data:", excelData.slice(0, 2));
 
-    const stoppages = parsed.filter((s) => s.nameEn && s.nameBn);
+    const parsed = excelData.map((item, index) => {
+      const result = {
+        nameEn: item.name_en || item.nameEn || item.NameEn || item.NAME_EN,
+        nameBn: item.name_bn || item.nameBn || item.NameBn || item.NAME_BN,
+        lat:
+          item.lat || item.latitude ? Number(item.lat || item.latitude) : null,
+        lon:
+          item.lon || item.lng || item.longitude
+            ? Number(item.lon || item.lng || item.longitude)
+            : null,
+      };
 
-    const created = await prisma.stoppage.createMany({
-      data: stoppages,
-      skipDuplicates: true,
+      if (index < 3) {
+        logger.info(`Parsed item ${index}:`, result);
+      }
+
+      return result;
     });
 
-    return created.count;
+    logger.info(`Parsed ${parsed.length} items`);
+
+    const validStoppages = parsed.filter((s) => s.nameEn && s.nameBn);
+    logger.info(`Filtered to ${validStoppages.length} valid stoppages`);
+
+    if (validStoppages.length === 0) {
+      logger.warn("No valid stoppages found after filtering");
+      return 0;
+    }
+
+    logger.info("Sample valid stoppages:", validStoppages.slice(0, 2));
+
+    try {
+      const created = await prisma.stoppage.createMany({
+        data: validStoppages,
+        skipDuplicates: true,
+      });
+
+      logger.info(
+        `Successfully created ${created.count} stoppages in database`
+      );
+      return created.count;
+    } catch (error) {
+      logger.error("Database error in bulkCreateFromExcel:", error);
+      throw error;
+    }
   },
 };
